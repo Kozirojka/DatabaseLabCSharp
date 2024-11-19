@@ -169,8 +169,104 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-    }
+        
+        private void btnAdd_Click(object sender, RoutedEventArgs e)
+        {
+            var addWindow = new CustomerWindow();
+            if (addWindow.ShowDialog() == true)
+            {
+                try
+                {
+                    InsertCustomer(addWindow.CustomerData);
+                    LoadCustomers(); // Refresh the grid
+                    MessageBox.Show("Customer added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error adding customer: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
 
+        private void btnEdit_Click(object sender, RoutedEventArgs e)
+        {
+            // var selectedCustomer = customersGrid.SelectedItem as Customer;
+            // if (selectedCustomer == null)
+            // {
+            //     MessageBox.Show("Please select a customer to edit.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+            //     return;
+            // }
+            //
+            // var editWindow = new CustomerWindow(selectedCustomer);
+            // if (editWindow.ShowDialog() == true)
+            // {
+            //     try
+            //     {
+            //         UpdateCustomer(editWindow.CustomerData);
+            //         LoadCustomers(); // Refresh the grid
+            //         MessageBox.Show("Customer updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            //     }
+            //     catch (Exception ex)
+            //     {
+            //         MessageBox.Show($"Error updating customer: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            //     }
+            // }
+        }
+
+        private void InsertCustomer(Customer customer)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = @"
+                    INSERT INTO Customer (FirstName, LastName, Email, PhoneNumber, Address, IsActive)
+                    VALUES (@FirstName, @LastName, @Email, @PhoneNumber, @Address, @IsActive)";
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@FirstName", customer.FirstName);
+                    cmd.Parameters.AddWithValue("@LastName", customer.LastName);
+                    cmd.Parameters.AddWithValue("@Email", customer.Email);
+                    cmd.Parameters.AddWithValue("@PhoneNumber", customer.PhoneNumber);
+                    cmd.Parameters.AddWithValue("@Address", customer.Address);
+                    cmd.Parameters.AddWithValue("@IsActive", customer.IsActive);
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void UpdateCustomer(Customer customer)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = @"
+                    UPDATE Customer 
+                    SET FirstName = @FirstName,
+                        LastName = @LastName,
+                        Email = @Email,
+                        PhoneNumber = @PhoneNumber,
+                        Address = @Address,
+                        IsActive = @IsActive
+                    WHERE CustomerID = @CustomerID";
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@CustomerID", customer.CustomerID);
+                    cmd.Parameters.AddWithValue("@FirstName", customer.FirstName);
+                    cmd.Parameters.AddWithValue("@LastName", customer.LastName);
+                    cmd.Parameters.AddWithValue("@Email", customer.Email);
+                    cmd.Parameters.AddWithValue("@PhoneNumber", customer.PhoneNumber);
+                    cmd.Parameters.AddWithValue("@Address", customer.Address);
+                    cmd.Parameters.AddWithValue("@IsActive", customer.IsActive);
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+    }
+    
     public class Customer
     {
         public int CustomerID { get; set; }
@@ -180,4 +276,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         public string PhoneNumber { get; set; }
         public string Address { get; set; }
         public bool IsActive { get; set; }
+        
     }
+    
+        

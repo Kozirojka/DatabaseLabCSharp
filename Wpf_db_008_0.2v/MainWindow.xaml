@@ -1,15 +1,16 @@
 ﻿<Window x:Class="Wpf_db_008_0._2v.MainWindow"
-         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Internet Provider - Customers" Height="600" Width="1000">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Search Panel -->
+        <!-- Search Panel (existing) -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
             <Label Content="First Name:" VerticalAlignment="Center"/>
             <TextBox x:Name="txtSearchFirstName" Width="150" Margin="5,0"/>
@@ -24,12 +25,20 @@
             <Button x:Name="btnClear" Content="Clear" Width="80" Click="btnClear_Click"/>
         </StackPanel>
 
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <Button x:Name="btnAdd" Content="Add New Customer" Width="120" Click="btnAdd_Click"/>
+            <Button x:Name="btnEdit" Content="Edit Selected" Width="120" Margin="10,0,0,0" Click="btnEdit_Click"/>
+        </StackPanel>
+
         <!-- DataGrid -->
-        <DataGrid Grid.Row="1" 
+        <DataGrid x:Name="customersGrid" 
+                  Grid.Row="2" 
                   ItemsSource="{Binding Customers}" 
                   AutoGenerateColumns="False" 
                   IsReadOnly="True"
                   GridLinesVisibility="All"
+                  SelectionMode="Single"
                   AlternatingRowBackground="#FFE8E8E8">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="ID" Binding="{Binding CustomerID}" Width="50"/>
@@ -43,7 +52,7 @@
         </DataGrid>
 
         <!-- Pagination Panel -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
             <Button x:Name="btnPrevious" Content="Previous" Width="80" Click="btnPrevious_Click"/>
             <TextBlock x:Name="txtPaginationInfo" VerticalAlignment="Center" Margin="10,0"/>
             <Button x:Name="btnNext" Content="Next" Width="80" Click="btnNext_Click"/>
