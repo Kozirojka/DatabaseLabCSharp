@@ -4,58 +4,122 @@
         Title="Internet Provider - Customers" Height="600" Width="1000">
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Search Panel (existing) -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-            <Label Content="First Name:" VerticalAlignment="Center"/>
-            <TextBox x:Name="txtSearchFirstName" Width="150" Margin="5,0"/>
-            
-            <Label Content="Last Name:" VerticalAlignment="Center"/>
-            <TextBox x:Name="txtSearchLastName" Width="150" Margin="5,0"/>
-            
-            <Label Content="Active:" VerticalAlignment="Center"/>
-            <CheckBox x:Name="chkActive" VerticalAlignment="Center" Margin="5,0" IsThreeState="True"/>
-            
-            <Button x:Name="btnSearch" Content="Search" Width="80" Margin="10,0" Click="btnSearch_Click"/>
-            <Button x:Name="btnClear" Content="Clear" Width="80" Click="btnClear_Click"/>
-        </StackPanel>
+        <TabControl>
+            <!-- Перший таб з існуючим функціоналом -->
+            <TabItem Header="Customers">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-        <!-- Action Buttons -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
-            <Button x:Name="btnAdd" Content="Add New Customer" Width="120" Click="btnAdd_Click"/>
-            <Button x:Name="btnEdit" Content="Edit Selected" Width="120" Margin="10,0,0,0" Click="btnEdit_Click"/>
-        </StackPanel>
+                    <!-- Search Panel (existing) -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                        <Label Content="First Name:" VerticalAlignment="Center"/>
+                        <TextBox x:Name="txtSearchFirstName" Width="150" Margin="5,0"/>
+                        
+                        <Label Content="Last Name:" VerticalAlignment="Center"/>
+                        <TextBox x:Name="txtSearchLastName" Width="150" Margin="5,0"/>
+                        
+                        <Label Content="Active:" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="chkActive" VerticalAlignment="Center" Margin="5,0" IsThreeState="True"/>
+                        
+                        <Button x:Name="btnSearch" Content="Search" Width="80" Margin="10,0" Click="btnSearch_Click"/>
+                        <Button x:Name="btnClear" Content="Clear" Width="80" Click="btnClear_Click"/>
+                    </StackPanel>
 
-        <!-- DataGrid -->
-        <DataGrid x:Name="customersGrid" 
-                  Grid.Row="2" 
-                  ItemsSource="{Binding Customers}" 
-                  AutoGenerateColumns="False" 
-                  IsReadOnly="True"
-                  GridLinesVisibility="All"
-                  SelectionMode="Single"
-                  AlternatingRowBackground="#FFE8E8E8">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding CustomerID}" Width="50"/>
-                <DataGridTextColumn Header="First Name" Binding="{Binding FirstName}" Width="120"/>
-                <DataGridTextColumn Header="Last Name" Binding="{Binding LastName}" Width="120"/>
-                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
-                <DataGridTextColumn Header="Phone" Binding="{Binding PhoneNumber}" Width="120"/>
-                <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
-                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="60"/>
-            </DataGrid.Columns>
-        </DataGrid>
+                    <!-- Action Buttons -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                        <Button x:Name="btnAdd" Content="Add New Customer" Width="120" Click="btnAdd_Click"/>
+                        <Button x:Name="btnEdit" Content="Edit Selected" Width="120" Margin="10,0,0,0" Click="btnEdit_Click"/>
+                    </StackPanel>
 
-        <!-- Pagination Panel -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-            <Button x:Name="btnPrevious" Content="Previous" Width="80" Click="btnPrevious_Click"/>
-            <TextBlock x:Name="txtPaginationInfo" VerticalAlignment="Center" Margin="10,0"/>
-            <Button x:Name="btnNext" Content="Next" Width="80" Click="btnNext_Click"/>
-        </StackPanel>
+                    <!-- DataGrid -->
+                    <DataGrid x:Name="customersGrid" 
+                            Grid.Row="2" 
+                            ItemsSource="{Binding Customers}" 
+                            AutoGenerateColumns="False" 
+                            IsReadOnly="True"
+                            GridLinesVisibility="All"
+                            SelectionMode="Single"
+                            AlternatingRowBackground="#FFE8E8E8">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding CustomerID}" Width="50"/>
+                            <DataGridTextColumn Header="First Name" Binding="{Binding FirstName}" Width="120"/>
+                            <DataGridTextColumn Header="Last Name" Binding="{Binding LastName}" Width="120"/>
+                            <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
+                            <DataGridTextColumn Header="Phone" Binding="{Binding PhoneNumber}" Width="120"/>
+                            <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
+                            <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="60"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Pagination Panel -->
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                        <Button x:Name="btnPrevious" Content="Previous" Width="80" Click="btnPrevious_Click"/>
+                        <TextBlock x:Name="txtPaginationInfo" VerticalAlignment="Center" Margin="10,0"/>
+                        <Button x:Name="btnNext" Content="Next" Width="80" Click="btnNext_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Новий таб для роботи з процедурою -->
+            <TabItem Header="Usage Monitor">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Параметри процедури -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,10">
+                        <Label Content="Data Limit (GB):" VerticalAlignment="Center"/>
+                        <TextBox x:Name="txtDataLimit" Width="80" Margin="5,0" Text="200"/>
+                        
+                        <Label Content="Start Date:" VerticalAlignment="Center"/>
+                        <DatePicker x:Name="dpStartDate" Width="120" Margin="5,0"/>
+                        
+                        <Label Content="End Date:" VerticalAlignment="Center"/>
+                        <DatePicker x:Name="dpEndDate" Width="120" Margin="5,0"/>
+                        
+                        <Button x:Name="btnCheckUsage" 
+                                Content="Check Usage" 
+                                Width="100" 
+                                Margin="10,0" 
+                                Click="btnCheckUsage_Click"/>
+                    </StackPanel>
+
+                    <!-- Результат -->
+                    <TextBlock x:Name="txtUsageResult" 
+                              Grid.Row="1" 
+                              Margin="0,10" 
+                              TextWrapping="Wrap"/>
+
+                    <!-- Таблиця результатів -->
+                    <DataGrid x:Name="usageGrid"
+                              Grid.Row="2"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              AlternatingRowBackground="#FFE8E8E8">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Customer Name" Binding="{Binding CustomerName}" Width="150"/>
+                            <DataGridTextColumn Header="Tariff" Binding="{Binding TariffName}" Width="100"/>
+                            <DataGridTextColumn Header="Speed" Binding="{Binding TariffSpeed}" Width="80"/>
+                            <DataGridTextColumn Header="Total Data (GB)" Binding="{Binding TotalDataUsedGB}" Width="100"/>
+                            <DataGridTextColumn Header="Excess (GB)" Binding="{Binding ExcessDataGB}" Width="100"/>
+                            <DataGridTextColumn Header="Days Active" Binding="{Binding DaysActive}" Width="80"/>
+                            <DataGridTextColumn Header="Avg Daily (GB)" Binding="{Binding AvgDailyUsageGB}" Width="100"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding SubscriptionStatus}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
