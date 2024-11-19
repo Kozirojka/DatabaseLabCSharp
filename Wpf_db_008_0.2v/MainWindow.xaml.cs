@@ -501,4 +501,155 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         txtLog.Text += message + "\n";
         txtLog.ScrollToEnd();
     }
+
+    /////////////////////////SOLVE TRANSACTION
+    ///
+    private async void btnStartResolutionTest_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            btnStartResolutionTest.IsEnabled = false;
+            btnResetResolutionData.IsEnabled = false;
+            txtResLog.Text = "";
+
+            int maxRetries = int.Parse(txtRetryCount.Text);
+            string isolationLevel = ((ComboBoxItem)cboIsolationLevel.SelectedItem).Content.ToString();
+
+            decimal initialValue = await GetCurrentUsageValue();
+            txtResInitialValue.Text = initialValue.ToString("F2") + " GB";
+            LogResMessage("Initial value: " + initialValue.ToString("F2") + " GB");
+            LogResMessage($"Using isolation level: {isolationLevel}");
+            LogResMessage($"Max retry attempts: {maxRetries}\n");
+
+            var task1 = ExecuteTransactionWithRetry(1, 50, isolationLevel, maxRetries);
+            var task2 = ExecuteTransactionWithRetry(2, 30, isolationLevel, maxRetries);
+
+            await Task.WhenAll(task1, task2);
+
+            decimal finalValue = await GetCurrentUsageValue();
+            decimal expectedValue = initialValue + 50 + 30;
+
+            txtResFinalValue.Text = finalValue.ToString("F2") + " GB";
+            txtResExpectedValue.Text = expectedValue.ToString("F2") + " GB";
+
+            LogResMessage($"\nFinal value: {finalValue:F2} GB");
+            LogResMessage($"Expected value: {expectedValue:F2} GB");
+
+            if (Math.Abs(finalValue - expectedValue) < 0.01m)
+            {
+                LogResMessage("\nSUCCESS: Both updates were applied correctly!");
+            }
+            else
+            {
+                LogResMessage("\nWARNING: Updates were not applied as expected.");
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            btnStartResolutionTest.IsEnabled = true;
+            btnResetResolutionData.IsEnabled = true;
+        }
+    }
+
+    private async Task ExecuteTransactionWithRetry(int transactionNumber, decimal addValue,
+        string isolationLevel, int maxRetries)
+    {
+        int retryCount = 0;
+        bool success = false;
+
+        while (!success && retryCount < maxRetries)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    await conn.OpenAsync();
+                    using (SqlCommand cmd = new SqlCommand())
+                    {
+                        cmd.Connection = conn;
+
+                        // Встановлюємо рівень ізоляції
+                        cmd.CommandText = $"SET TRANSACTION ISOLATION LEVEL {isolationLevel};";
+                        await cmd.ExecuteNonQueryAsync();
+
+                        cmd.CommandText = @"
+                        BEGIN TRANSACTION;
+                        DECLARE @currentUsage DECIMAL(10,2);
+                        SELECT @currentUsage = DataUsed FROM InternetUsage WITH (UPDLOCK) WHERE UsageID = 1;
+                        WAITFOR DELAY '00:00:02';
+                        UPDATE InternetUsage SET DataUsed = @currentUsage + @addValue WHERE UsageID = 1;
+                        COMMIT TRANSACTION;
+                        SELECT DataUsed FROM InternetUsage WHERE UsageID = 1;";
+
+                        cmd.Parameters.AddWithValue("@addValue", addValue);
+
+                        decimal result = (decimal)await cmd.ExecuteScalarAsync();
+
+                        if (transactionNumber == 1)
+                            txtResTransaction1.Text = $"Success after {retryCount} retries";
+                        else
+                            txtResTransaction2.Text = $"Success after {retryCount} retries";
+
+                        LogResMessage(
+                            $"Transaction {transactionNumber} completed (attempt {retryCount + 1}): {result:F2} GB");
+                        success = true;
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                retryCount++;
+                if (retryCount >= maxRetries)
+                {
+                    if (transactionNumber == 1)
+                        txtResTransaction1.Text = "Failed after max retries";
+                    else
+                        txtResTransaction2.Text = "Failed after max retries";
+
+                    LogResMessage($"Transaction {transactionNumber} failed after {maxRetries} attempts: {ex.Message}");
+                    throw;
+                }
+
+                LogResMessage($"Transaction {transactionNumber} retry {retryCount}: {ex.Message}");
+                await Task.Delay(100 * retryCount); // Експоненціальна затримка
+            }
+        }
+    }
+
+    private async void btnResetResolutionData_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+                using (SqlCommand cmd = new SqlCommand(
+                           "UPDATE InternetUsage SET DataUsed = 100 WHERE UsageID = 1", conn))
+                {
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+
+            txtResInitialValue.Text = "---";
+            txtResTransaction1.Text = "---";
+            txtResTransaction2.Text = "---";
+            txtResFinalValue.Text = "---";
+            txtResExpectedValue.Text = "---";
+            txtResLog.Text = "Data reset to 100 GB";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void LogResMessage(string message)
+    {
+        txtResLog.Text += message + "\n";
+        txtResLog.ScrollToEnd();
+    }
 }
