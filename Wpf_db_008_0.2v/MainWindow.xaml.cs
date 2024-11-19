@@ -198,10 +198,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var selectedCustomer = customersGrid.SelectedItem as Customer;
         if (selectedCustomer == null)
         {
-            MessageBox.Show("Please select a customer to edit.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("Please select a customer to edit.", "Warning", MessageBoxButton.OK,
+                MessageBoxImage.Warning);
             return;
         }
-        
+
         var editWindow = new CustomerWindow(selectedCustomer);
         if (editWindow.ShowDialog() == true)
         {
@@ -209,11 +210,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 UpdateCustomer(editWindow.CustomerData);
                 LoadCustomers(); // Refresh the grid
-                MessageBox.Show("Customer updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Customer updated successfully!", "Success", MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error updating customer: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error updating customer: {ex.Message}", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
     }
@@ -342,6 +345,160 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Mouse.OverrideCursor = null;
         }
     }
+
+    private async void btnStartTest_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            btnStartTest.IsEnabled = false;
+            btnResetData.IsEnabled = false;
+            txtLog.Text = "";
+
+            // Початкове значення
+            decimal initialValue = await GetCurrentUsageValue();
+            txtInitialValue.Text = initialValue.ToString("F2") + " GB";
+            LogMessage("Initial value: " + initialValue.ToString("F2") + " GB");
+
+            // Запускаємо дві транзакції паралельно
+            var task1 = Transaction1();
+            var task2 = Transaction2();
+
+            await Task.WhenAll(task1, task2);
+
+            // Отримуємо фінальне значення
+            decimal finalValue = await GetCurrentUsageValue();
+            txtFinalValue.Text = finalValue.ToString("F2") + " GB";
+
+            // Очікуване значення
+            decimal expectedValue = initialValue + 50 + 30;
+            txtExpectedValue.Text = expectedValue.ToString("F2") + " GB";
+
+            LogMessage($"\nFinal value: {finalValue:F2} GB");
+            LogMessage($"Expected value: {expectedValue:F2} GB");
+
+            if (finalValue < expectedValue)
+            {
+                LogMessage("\nANOMALY DETECTED: Lost Update!");
+                LogMessage("The final value is less than expected because one of the updates was lost.");
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            btnStartTest.IsEnabled = true;
+            btnResetData.IsEnabled = true;
+        }
+    }
+
+    private async Task<decimal> GetCurrentUsageValue()
+    {
+        using (SqlConnection conn = new SqlConnection(connectionString))
+        {
+            await conn.OpenAsync();
+            using (SqlCommand cmd = new SqlCommand(
+                       "SELECT DataUsed FROM InternetUsage WHERE UsageID = 1", conn))
+            {
+                return (decimal)await cmd.ExecuteScalarAsync();
+            }
+        }
+    }
+
+    private async Task Transaction1()
+    {
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    cmd.Connection = conn;
+                    cmd.CommandText = @"
+                    BEGIN TRANSACTION;
+                    DECLARE @currentUsage DECIMAL(10,2);
+                    SELECT @currentUsage = DataUsed FROM InternetUsage WHERE UsageID = 1;
+                    WAITFOR DELAY '00:00:02';
+                    UPDATE InternetUsage SET DataUsed = @currentUsage + 50 WHERE UsageID = 1;
+                    COMMIT TRANSACTION;
+                    SELECT DataUsed FROM InternetUsage WHERE UsageID = 1;";
+
+                    decimal result = (decimal)await cmd.ExecuteScalarAsync();
+                    txtTransaction1.Text = result.ToString("F2") + " GB";
+                    LogMessage($"Transaction 1 completed: {result:F2} GB");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Transaction 1 error: {ex.Message}");
+        }
+    }
+
+    private async Task Transaction2()
+    {
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+
+                using (SqlCommand cmd = new SqlCommand())
+                {
+                    cmd.Connection = conn;
+                    cmd.CommandText = @"
+                    BEGIN TRANSACTION;
+                    DECLARE @currentUsage DECIMAL(10,2);
+                    SELECT @currentUsage = DataUsed FROM InternetUsage WHERE UsageID = 1;
+                    UPDATE InternetUsage SET DataUsed = @currentUsage + 30 WHERE UsageID = 1;
+                    COMMIT TRANSACTION;
+                    SELECT DataUsed FROM InternetUsage WHERE UsageID = 1;";
+
+                    decimal result = (decimal)await cmd.ExecuteScalarAsync();
+                    txtTransaction2.Text = result.ToString("F2") + " GB";
+                    LogMessage($"Transaction 2 completed: {result:F2} GB");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"Transaction 2 error: {ex.Message}");
+        }
+    }
+
+    private async void btnResetData_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+                using (SqlCommand cmd = new SqlCommand(
+                           "UPDATE InternetUsage SET DataUsed = 100 WHERE UsageID = 1", conn))
+                {
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+
+            txtInitialValue.Text = "---";
+            txtTransaction1.Text = "---";
+            txtTransaction2.Text = "---";
+            txtFinalValue.Text = "---";
+            txtExpectedValue.Text = "---";
+            txtLog.Text = "Data reset to 100 GB";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void LogMessage(string message)
+    {
+        txtLog.Text += message + "\n";
+        txtLog.ScrollToEnd();
+    }
 }
-
-
